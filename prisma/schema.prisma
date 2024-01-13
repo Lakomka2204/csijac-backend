@@ -34,7 +34,7 @@ model users {
 }
 
 model videos {
-  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id          String    @id @default(dbgenerated("substring(md5(gen_random_uuid()::text),greatest(0,floor((random()*32)-8))::int,8)")) @db.Char(8)
   user_id     String?   @db.Uuid
   title       String    @db.VarChar(255)
   description String?   @db.VarChar(5000)

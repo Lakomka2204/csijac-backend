@@ -1,10 +1,8 @@
-import { users } from "@prisma/client";
-type AuthBase = {
+export type AuthBase = {
   username:string,
   password:string,
 }
-type AuthWithIP = AuthBase & {
+export type AuthWithIP = AuthBase & {
   ip:string,
   ua:string
 }
-export {users as User, AuthWithIP, AuthBase };

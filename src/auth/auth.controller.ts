@@ -27,7 +27,7 @@ export class AuthController {
       (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress;
     const ua = req.headers['user-agent'] as string;
     if (!ua) throw new HttpException('BAD_REQUEST', HttpStatus.BAD_REQUEST);
-    const token = await this.userService.login({
+    const token = await this.userService.register({
       ...user,
       ua,
       ip,

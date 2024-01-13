@@ -10,9 +10,10 @@ export class AuthService {
   async register(user: AuthWithIP): Promise<string> {
     const { username, password, ip, ua } = user;
     const dbUser = await this.client.users.findFirst({
-      where:{username}
+      where: { username },
     });
-    if (dbUser) throw new HttpException("User already exists",HttpStatus.FORBIDDEN);
+    if (dbUser)
+      throw new HttpException('User already exists', HttpStatus.FORBIDDEN);
     const { id } = await this.client.users.create({
       data: {
         username,
@@ -32,17 +33,24 @@ export class AuthService {
       select: { id: true, password: true },
       where: { username },
     });
-    if (!dbUser) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    if (!dbUser)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     if (!(await this.appService.checkPassword(password, dbUser.password)))
       throw new HttpException('Wrong password', HttpStatus.BAD_REQUEST);
-    const {token} = await this.client.auth.findFirst({
-      select:{token:true},
-      where:{ip,ua,user_id:dbUser.id}
+    const { token, id } = await this.client.auth.findFirst({
+      select: { token: true, id: true },
+      where: { ip, ua, user_id: dbUser.id },
     });
-    if (token) {
-        return token;
+    if (id) {
+      await this.client.auth.update({
+        where: { id },
+        data: {
+          last_accessed_at: new Date(),
+        },
+      });
+      return token;
     } else {
-      const { token: newToken} = await this.client.auth.create({
+      const { token: newToken } = await this.client.auth.create({
         data: { ip, ua, user_id: dbUser.id },
         select: { token: true },
       });
