@@ -1,60 +1,28 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { AuthWithIP } from './auth.models';
-import { AppService } from 'src/app.service';
+import { CreateAuthDto } from './dto/create-auth.dto';
+import { EditAuthDto } from './dto/edit-auth.dto';
+import { GetAuthDto } from './dto/get-auth.dto';
 
 @Injectable()
 export class AuthService {
-  constructor(private appService: AppService) {}
   client = new PrismaClient({ errorFormat: 'pretty' });
-  async register(user: AuthWithIP): Promise<string> {
-    const { username, password, ip, ua } = user;
-    const dbUser = await this.client.users.findFirst({
-      where: { username },
-    });
-    if (dbUser)
-      throw new HttpException('User already exists', HttpStatus.FORBIDDEN);
-    const { id } = await this.client.users.create({
-      data: {
-        username,
-        password: await this.appService.encryptPassword(password),
-      },
-      select: { id: true },
-    });
-    const { token } = await this.client.auth.create({
-      data: { ip, ua, user_id: id },
-      select: { token: true },
-    });
-    return token;
+  async create(auth: CreateAuthDto) {
+    return await this.client.auth.create({data:auth});
   }
-  async login(user: AuthWithIP) {
-    const { username, password, ip, ua } = user;
-    const dbUser = await this.client.users.findFirst({
-      select: { id: true, password: true },
-      where: { username },
-    });
-    if (!dbUser)
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    if (!(await this.appService.checkPassword(password, dbUser.password)))
-      throw new HttpException('Wrong password', HttpStatus.BAD_REQUEST);
-    const { token, id } = await this.client.auth.findFirst({
-      select: { token: true, id: true },
-      where: { ip, ua, user_id: dbUser.id },
-    });
-    if (id) {
-      await this.client.auth.update({
-        where: { id },
-        data: {
-          last_accessed_at: new Date(),
-        },
-      });
-      return token;
-    } else {
-      const { token: newToken } = await this.client.auth.create({
-        data: { ip, ua, user_id: dbUser.id },
-        select: { token: true },
-      });
-      return newToken;
-    }
+  async get(token:string) {
+    return await this.client.auth.findFirst({where:{token}});
+  }
+  async getByUserId(user_id:string) {
+    return await this.client.auth.findMany({where:{user_id}});
+  }
+  async getByIpUa(auth: GetAuthDto) {
+    return await this.client.auth.findFirst({where:auth});
+  }
+  async edit(auth: EditAuthDto) {
+    return await this.client.auth.update({data:{last_accessed_at:new Date()},where:auth});
+  }
+  async delete(token:string) {
+    return await this.client.auth.delete({where:{token}});
   }
 }
