@@ -1,9 +1,12 @@
 import {
+  BadRequestException,
   Body,
+  ConflictException,
   Controller,
   Get,
   HttpException,
   HttpStatus,
+  NotFoundException,
   Post,
   Req,
   Res,
@@ -29,17 +32,15 @@ export class AuthController {
     @Body() user: AuthUserDto,
     @Res() res: Response,
   ) {
-    user = plainToClass(AuthUserDto,user);
+    user = plainToClass(AuthUserDto, user);
     const errors = await validate(user);
-    if (errors.length > 0)
-      throw new HttpException(errors,HttpStatus.BAD_REQUEST,{cause:errors});
+    if (errors.length > 0) throw new BadRequestException(errors);
     const ip =
       (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress;
     const ua = req.headers['user-agent'] as string;
-    if (!ua) throw new HttpException('BAD_REQUEST', HttpStatus.BAD_REQUEST);
+    if (!ua) throw new BadRequestException();
     const dbUser = await this.userService.getByName(user.username);
-    if (dbUser)
-      throw new HttpException('CONFLICT', HttpStatus.CONFLICT);
+    if (dbUser) throw new ConflictException();
     user.password = await this.appService.encryptPassword(user.password);
     const { id } = await this.userService.create(user);
     const { token } = await this.authService.create({ ip, ua, user_id: id });
@@ -52,20 +53,20 @@ export class AuthController {
     @Body() user: AuthUserDto,
     @Res() res: Response,
   ) {
-    if (JSON.stringify(user) === '{}')
-      throw new HttpException('BAD_REQUEST', HttpStatus.BAD_REQUEST);
+    user = plainToClass(AuthUserDto, user);
+    const errors = await validate(user);
+    if (errors.length > 0) throw new BadRequestException(errors);
     const ip =
       (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress;
     const ua = req.headers['user-agent'] as string;
-    if (!ua) throw new HttpException('BAD_REQUEST', HttpStatus.BAD_REQUEST);
+    if (!ua) throw new BadRequestException();
     const dbUser = await this.userService.getByName(user.username);
-    if (!dbUser) throw new HttpException('NOT_FOUND', HttpStatus.NOT_FOUND);
+    if (!dbUser) throw new NotFoundException();
     const passCheck = await this.appService.checkPassword(
       user.password,
       dbUser.password,
     );
-    if (!passCheck)
-      throw new HttpException('BAD_REQUEST', HttpStatus.BAD_REQUEST);
+    if (!passCheck) throw new BadRequestException();
     let auth = await this.authService.getByIpUa({ ip, ua });
     if (!auth)
       auth = await this.authService.create({ ip, ua, user_id: dbUser.id });

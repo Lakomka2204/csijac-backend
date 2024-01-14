@@ -12,4 +12,5 @@ export class ReturnAuthDto implements auth {
   ua: string;
   @Exclude()
   user_id: string;
+  current:boolean;
 }
