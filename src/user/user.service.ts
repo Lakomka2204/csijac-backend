@@ -5,20 +5,26 @@ import { EditUserDto } from './dto/edit-user.dto';
 
 @Injectable()
 export class UserService {
-  client = new PrismaClient({ errorFormat: 'pretty' });
+  private static readonly client = new PrismaClient({ errorFormat: 'pretty' });
   async create(user: AuthUserDto) {
-    return await this.client.users.create({data:user});
+    if (
+      await UserService.client.users.findFirst({ where: { username: user.username } })
+    )
+      throw new Error('User already exists');
+    return await UserService.client.users.create({ data: user });
   }
-  async get(id:string) {
-    return await this.client.users.findFirst({where:{id}});
+  async get(id: string) {
+    return await UserService.client.users.findFirst({ where: { id } });
   }
-  async getByName(username:string) {
-    return await this.client.users.findFirst({where:{username}});
+  async getByName(username: string) {
+    return await UserService.client.users.findFirst({ where: { username } });
   }
-  async edit(id:string,user: EditUserDto) {
-    return await this.client.users.update({data:user,where:{id}});
+  async edit(id: string, user: EditUserDto) {
+    if (user.password)
+      await UserService.client.auth.deleteMany({ where: { user_id: id } });
+    return await UserService.client.users.update({ data: user, where: { id } });
   }
-  async delete(id:string) {
-    return await this.client.users.delete({where:{id}});
+  async delete(id: string) {
+    return await UserService.client.users.delete({ where: { id } });
   }
 }

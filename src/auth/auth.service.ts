@@ -5,23 +5,23 @@ import { GetAuthDto } from './dto/get-auth.dto';
 
 @Injectable()
 export class AuthService {
-  client = new PrismaClient({ errorFormat: 'pretty' });
+  private static readonly client: PrismaClient = new PrismaClient({ errorFormat: 'pretty' });
   async create(auth: CreateAuthDto) {
-    return await this.client.auth.create({data:auth});
+    return await AuthService.client.auth.create({data:auth});
   }
   async get(token:string) {
-    return await this.client.auth.findFirst({where:{token}});
+    return await AuthService.client.auth.findFirst({where:{token}});
   }
   async getByUserId(user_id:string) {
-    return await this.client.auth.findMany({where:{user_id}});
+    return await AuthService.client.auth.findMany({where:{user_id}});
   }
-  async getByIpUa(auth: GetAuthDto) {
-    return await this.client.auth.findFirst({where:auth});
+  async getByIpUaUser(auth: GetAuthDto) {
+    return await AuthService.client.auth.findFirst({where:auth});
   }
   async edit(token: string) {
-    return await this.client.auth.update({data:{last_accessed_at:new Date()},where:{token}});
+    return await AuthService.client.auth.update({data:{last_accessed_at:new Date()},where:{token}});
   }
   async delete(token:string) {
-    return await this.client.auth.delete({where:{token}});
+    return await AuthService.client.auth.delete({where:{token}});
   }
 }

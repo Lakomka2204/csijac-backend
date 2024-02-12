@@ -8,8 +8,9 @@ datasource db {
 }
 
 model auth {
+  id               String   @id @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   user_id          String   @db.Uuid
-  token            String   @id @unique @default(dbgenerated("md5((random())::text)"))
+  token            String   @unique @default(dbgenerated("md5((random())::text)"))
   ip               String   @db.Inet
   ua               String
   created_at       DateTime @default(now()) @db.Timestamptz(6)
@@ -22,7 +23,7 @@ model auth {
 
 model users {
   id           String    @id @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  username     String    @db.VarChar(32)
+  username     String    @db.VarChar(32) @unique
   display_name String?   @db.VarChar(64)
   password     String    @db.VarChar(128)
   created_at   DateTime? @default(dbgenerated("LOCALTIMESTAMP")) @db.Timestamptz(6)

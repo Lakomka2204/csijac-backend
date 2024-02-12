@@ -67,7 +67,7 @@ export class AuthController {
       dbUser.password,
     );
     if (!passCheck) throw new BadRequestException();
-    let auth = await this.authService.getByIpUa({ ip, ua });
+    let auth = await this.authService.getByIpUaUser({ ip, ua,user_id:dbUser.id});
     if (!auth)
       auth = await this.authService.create({ ip, ua, user_id: dbUser.id });
     res.header('Authorization', 'Bearer ' + auth.token);

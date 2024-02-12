@@ -2,6 +2,7 @@ import { Prisma, auth } from "@prisma/client";
 import { Exclude } from "class-transformer";
 
 export class ReturnAuthDto implements auth {
+  id: string;
   additional_info: Prisma.JsonValue;
   created_at: Date;
   ip: string;
